@@ -1,0 +1,29 @@
+[
+    {
+        "url": "/register",
+        "request": {
+            "body": {
+                "userName": "name",
+                "email": "my@email.com",
+                "password": "parola"
+            }
+        },
+        "response": {
+            "body": {
+                "status": "ok/error",
+                "message": "user registered successfully",
+                "authToken": "3r3rvmo23",
+                "refreshToken": "3efmwgom4"
+            }
+        }
+    },
+    {
+        "url": "/login",
+        "request": {
+            "body": {
+                "email": "my@email.com",
+                "password": "parola"
+            }
+        }
+    }
+]
