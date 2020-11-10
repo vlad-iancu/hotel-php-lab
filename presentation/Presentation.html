@@ -1,0 +1,30 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="/presentation/Presentation.css" />
+</head>
+
+<body>
+    <div class="presentation-card">
+        <p class="presentation-content">Aceasta aplicatie modeleaza interactiunea dintre mai multi proprietari de
+            hoteluri ce doresc sa isi listeze hotelele si camere catre clienti si utilizatorii care vor sa inchirieze
+            aceste camere</p>
+        <p class="presentation-content">Nu exista o distinctie clara intre utilizator si proprietar de hotel
+            deoarece orice utilizator isi poate crea un hotel, moment in care acesta devine administratorul sau</p>
+        <p class="presentation-content">Un administrator de hotel poate sa acorde permisiuni de adaugare, modificare
+            si stergere a camerelor altor utilizatori, precum si sa stabileasca cine poate vedea hotelul sau
+            camerele</p>
+    </div>
+
+</body>
+<img src="/presentation/db_diagram.png" />
+
+<div class="presentation-card">
+    <p class="presentation-content">Ca un utilizator sa poata accesa o resursa, trebuie ca in baza de date sa existe o
+        asociere intre utilizator si permisiunea respectiva</p>
+    <p class="presentation-content">In tabelul de permisiuni, vor exista cele trei permisiuni canonice (ANONYMUS,
+        AUTHENTICATED si APP_ADMIN) 'grupurile' de utlizatori create de administratorii de hoteluri</p>
+    <p class="presentation-content">Aceste permisiuni determina cine poate vedea sau modifica un hotel</p>
+</div>
+
+</html>
