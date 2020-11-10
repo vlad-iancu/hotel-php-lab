@@ -1,12 +1,11 @@
 <?php
     require_once './auth/AuthenticationRoutes.php';
-    require_once './UIRoutes.php';
+    require_once './hotel/identity/HotelIdentityRoutes.php';
     require_once './Router.php';
     $router = new Router();
+    $router->authorize = 'authorize';
     addAuthenticationRoutes($router);
-    addUiRoutes($router);
-    $router->get("/path", function() {
-        readfile("./page/index.html");
-    });
+    addHotelIdentityRoutes($router);
     $router->route();
+  
 ?>

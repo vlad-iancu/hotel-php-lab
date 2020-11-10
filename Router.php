@@ -1,54 +1,119 @@
-<?php 
-    class Router {
-        public $routes = array();
-        public $routeCount = 0;
-        
-        public function route() {
-            $path = $_SERVER["REQUEST_URI"];
-            foreach($this->routes as $rt) {
-                if($rt->method == $_SERVER["REQUEST_METHOD"])
-                    if($rt->path == $_SERVER["REQUEST_URI"]) {
-                        error_log("Route $rt->path matches");
-                        $invokeBlock = $rt->block;
-                        $invokeBlock();
+<?php
+class Router
+{
+    public $routes = array();
+    public $routeCount = 0;
+    public $authorize;
+    public $name = "";
+
+    public function route()
+    {
+        $path = $_SERVER["REQUEST_URI"];
+        $found = false;
+        $matchingRoute = null;
+        foreach ($this->routes as $rt) {
+            if ($rt->method == $_SERVER["REQUEST_METHOD"]) {
+                if ($rt->path == $_SERVER["REQUEST_URI"]) {
+                    if ($found) {
+                        $this->notFound();
+                        return;
+                    } else {
+                        $matchingRoute = $rt;
+                        $found = true;
                     }
-                    else {
-                        error_log("Route $rt->path does not match current request");
-                    }
-                else {
-                    error_log("Route $rt->path does not match current request");
                 }
             }
         }
-
-        public function get($path, $block) {
-            $newRoute = new Route();
-            $newRoute->path = $path;
-            $newRoute->method = "GET";
-            $newRoute->block = $block;
-            $this->routes[$this->routeCount] = $newRoute;
-            $this->routeCount++;
+        if (!$found) {
+            $this->notFound();
+            return;
         }
-
-        public function post($path, $block) {
-            $newRoute = new Route();
-            $newRoute->path = $path;
-            $newRoute->method = "POST";
-            $newRoute->block = $block;
-            $this->routes[$this->routeCount] = $newRoute;
-            $this->routeCount++;
+        $invokeBlock = $matchingRoute->block;
+        if ($matchingRoute->authorized) {
+            if ($rt->method != "GET") {
+                $body = json_decode(file_get_contents("php://input"), true);
+                $userid = ($this->authorize)();
+                $invokeBlock($body, $userid);
+            } else {
+                $userid = ($this->authorize)();
+                $invokeBlock($userid);
+            }
+        } else {
+            if ($matchingRoute->method != "GET") {
+                $body = json_decode(file_get_contents("php://input"), true);
+                $invokeBlock($body);
+            } else {
+                $invokeBlock($body);
+            }
         }
-        
     }
-    //I made this router kinda stupid, it can only match equality
-    //This won't matter anyway because there is no such thing like
-    // '/user/{id}' because all the data will be sent and received via JSON
-    // because this is an API that does serve HTML only through '/' route
-    //All the others will be just REST endpoints
 
-    class Route {
-        public $path;
-        public $block;
-        public $method;
+    public function get($path, $authorize, $block)
+    {
+        $newRoute = new Route();
+        $newRoute->path = $path;
+        $newRoute->method = "GET";
+        $newRoute->authorized = $authorize;
+        $newRoute->block = $block;
+        $this->routes[$this->routeCount] = $newRoute;
+        $this->routeCount++;
     }
-?>
+
+    public function post($path, $authorize, $block)
+    {
+        $newRoute = new Route();
+        $newRoute->path = $path;
+        $newRoute->method = "POST";
+        $newRoute->authorized = $authorize;
+        $newRoute->block = $block;
+        $this->routes[$this->routeCount] = $newRoute;
+        $this->routeCount++;
+    }
+
+    public function delete($path, $authorize, $block)
+    {
+        $newRoute = new Route();
+        $newRoute->path = $path;
+        $newRoute->method = "DELETE";
+        $newRoute->authorized = $authorize;
+        $newRoute->block = $block;
+        $this->routes[$this->routeCount] = $newRoute;
+        $this->routeCount++;
+    }
+
+    public function put($path, $authorize, $block)
+    {
+        $newRoute = new Route();
+        $newRoute->path = $path;
+        $newRoute->method = "PUT";
+        $newRoute->authorized = $authorize;
+        $newRoute->block = $block;
+        $this->routes[$this->routeCount] = $newRoute;
+        $this->routeCount++;
+    }
+
+    public function notFound()
+    {
+        $result = array("status" => "error", "message" => "There is no route matching this url");
+        echo json_encode($result);
+    }
+
+    public function multipleMatch()
+    {
+        $result = array("status" => "error", "message" => "There are multiple routes matching this URL");
+        echo json_encode($result);
+    }
+}
+//I made this router kinda stupid, it can only match equality
+//This won't matter anyway because there is no such thing like
+// '/user/{id}' because all the data will be sent and received via JSON
+// because this is an API that does serve HTML only through '/' route
+//All the others will be just REST endpoints
+
+class Route
+{
+    public $path;
+    public $block;
+    public $method;
+    public $authorized;
+}

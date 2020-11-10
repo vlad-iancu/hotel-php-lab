@@ -1,0 +1,113 @@
+CREATE DATABASE IF NOT EXISTS hotel_db;
+USE hotel_db;
+DROP TABLE REVIEW;
+DROP TABLE BOOKING;
+DROP TABLE ROOM;
+DROP TABLE HOTEL;
+DROP TABLE TOKEN;
+DROP TABLE PERMISSION_GRANT;
+DROP TABLE PERMISSION;
+DROP TABLE USER;
+
+CREATE TABLE USER(
+    userId INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    userName VARCHAR(64),
+    email VARCHAR(64) UNIQUE,
+    password VARCHAR(128)
+);
+
+CREATE TABLE PERMISSION(
+	permissionId INT PRIMARY KEY AUTO_INCREMENT,
+    permissionName VARCHAR(64)
+);
+
+CREATE TABLE PERMISSION_GRANT(
+	permissionId INT,
+    userId INT,
+    PRIMARY KEY (permissionId, userId),
+    
+    CONSTRAINT PERMISSION_GRANT_TO_PERMISSION FOREIGN KEY (permissionId)
+    REFERENCES PERMISSION(permissionId),
+    
+    CONSTRAINT PERMISSION_GRANT_TO_USER FOREIGN KEY (userId)
+    REFERENCES USER(userId)
+);
+
+CREATE TABLE TOKEN(
+    value VARCHAR(64) PRIMARY KEY,
+    tokenType INT,
+    userId INT,
+    expiration INT(11),
+    
+    CONSTRAINT TOKEN_TO_USER FOREIGN KEY (userId)
+    REFERENCES USER(userId)
+);
+
+CREATE TABLE HOTEL(
+    hotelId INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    hotelName VARCHAR(128),
+    adminPermissionId INT,
+    viewHotelPermissionId INT,
+    createRoomPermissionId INT,
+    
+    CONSTRAINT CREATE_ROOM FOREIGN KEY (createRoomPermissionId)
+    REFERENCES PERMISSION(permissionId),
+    
+    CONSTRAINT VIEW_HOTEL FOREIGN KEY (viewHotelPermissionId)
+    REFERENCES PERMISSION(permissionId),
+    
+    CONSTRAINT HOTEL_ADMIN FOREIGN KEY (adminPermissionId)
+    REFERENCES PERMISSION(permissionId),
+);
+
+CREATE TABLE ROOM (
+    roomId INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    hotelId INT,
+    readPermissionId INT,
+    writePermissionId INT,
+    deletePermissionId INT,
+    cancelBookingPermissionId INT,
+    
+    CONSTRAINT ROOM_HOTEL FOREIGN KEY (hotelId)
+    REFERENCES HOTEL(hotelId),
+    
+    CONSTRAINT CANCEL_BOOKING FOREIGN KEY (cancelBookingPermissionId)
+    REFERENCES PERMISSION(permissionId),
+    
+    CONSTRAINT ROOM_READ_PERMISSION FOREIGN KEY (readPermissionId)
+    REFERENCES PERMISSION(permissionId),
+    
+    CONSTRAINT ROOM_WRITE_PERMISSION FOREIGN KEY (writePermissionId)
+    REFERENCES PERMISSION(permissionId),
+    
+    CONSTRAINT ROOM_DELETE_PERMISSION FOREIGN KEY (deletePermissionId)
+    REFERENCES PERMISSION(permissionId)
+);
+
+CREATE TABLE BOOKING (
+    userId INT,
+    roomId INT,
+    date INT(11),
+    
+    CONSTRAINT BOOKING_TO_USER FOREIGN KEY (userId)
+    REFERENCES USER(userId),
+    
+    CONSTRAINT BOOKING_TO_ROOM FOREIGN KEY (roomId)
+    REFERENCES ROOM(roomId)
+);
+
+CREATE TABLE REVIEW (
+    userId INT,
+    roomId INT,
+    date INT(11),
+    
+    CONSTRAINT REVIEW_TO_USER FOREIGN KEY (userId)
+    REFERENCES USER(userId),
+    
+    CONSTRAINT REVIEW_TO_ROOM FOREIGN KEY (roomId)
+    REFERENCES HOTEL(hotelId),	
+);
+INSERT INTO PERMISSION(permissionName) VALUES('ANONYMUS');
+INSERT INTO PERMISSION(permissionName) VALUES('AUTHENTICATED');
+INSERT INTO PERMISSION(permissionName) VALUES('APP_ADMIN');
+GRANT ALL PRIVILEGES ON hotel_db.* TO 'hotel_db_user'@'127.0.0.1';

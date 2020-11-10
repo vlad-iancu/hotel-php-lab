@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="6720c831-3e08-45bc-9847-b905e73c4d88" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/Router.php" beforeDir="false" afterPath="$PROJECT_DIR$/Router.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/UIRoutes.php" beforeDir="false" afterPath="$PROJECT_DIR$/UIRoutes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auth/AuthenticationRepository.php" beforeDir="false" afterPath="$PROJECT_DIR$/auth/AuthenticationRepository.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/auth/AuthenticationRoutes.php" beforeDir="false" afterPath="$PROJECT_DIR$/auth/AuthenticationRoutes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.php" beforeDir="false" afterPath="$PROJECT_DIR$/index.php" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="PhpDebugGeneral" listening_started="true" />
+  <component name="ProjectId" id="1jhQJI4eq3wID5UgjD0AlQmhrKu" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="nodejs.jest.jest_package" value="" />
+    <property name="settings.editor.selected.configurable" value="reference.webide.settings.project.settings.php" />
+    <property name="vue.rearranger.settings.migration" value="true" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="6720c831-3e08-45bc-9847-b905e73c4d88" name="Default Changelist" comment="" />
+      <created>1604253770630</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1604253770630</updated>
+      <workItem from="1604253772312" duration="299000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="454" y="211" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1604253852827">
+      <screen x="72" y="27" width="1848" height="1053" />
+    </state>
+    <state x="454" y="211" key="#com.intellij.execution.impl.EditConfigurationsDialog/72.27.1848.1053@72.27.1848.1053" timestamp="1604253852827" />
+    <state x="485" y="188" width="1022" height="737" key="SettingsEditor" timestamp="1604254039853">
+      <screen x="72" y="27" width="1848" height="1053" />
+    </state>
+    <state x="485" y="188" width="1022" height="737" key="SettingsEditor/72.27.1848.1053@72.27.1848.1053" timestamp="1604254039853" />
+  </component>
+</project>
