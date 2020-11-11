@@ -19,11 +19,12 @@ CREATE TABLE `USER` (
 )
 
 CREATE TABLE PERMISSION(
-	permissionId INT PRIMARY KEY AUTO_INCREMENT,
-    permissionName VARCHAR(64)
+	permissionId INT NOT NULL AUTO_INCREMENT,
+    permissionName VARCHAR(64),
+    PRIMARY KEY(permissionId)
 );
 
-CREATE TABLE  PERMISSION_GRANT(
+CREATE TABLE PERMISSION_GRANT(
 	permissionId INT,
     userId INT,
     PRIMARY KEY (permissionId, userId),
