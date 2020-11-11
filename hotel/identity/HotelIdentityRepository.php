@@ -40,6 +40,7 @@
             return error($conn);
             
         }
+        debug(TAG,"Added admin permission");
         $permissionGrantSql = "REPLACE INTO PERMISSION_GRANT VALUES(?,?);";
         $permissionGrant = mysqli_prepare($conn, $permissionGrantSql);
         if(!$permissionGrant) {
