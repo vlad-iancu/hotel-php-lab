@@ -15,7 +15,7 @@ setup:
 	cp config/hotel-api.conf /etc/apache2/sites-available/hotel-api.conf
 	sudo mkdir /var/www/hotel
 	sudo ln -s . /var/www/hotel/scripts
-	sudo ln -s ./logs /var/www/hotel/logs
+	sudo ln -s $(pwd)/logs /var/www/hotel/logs
 	sudo ln -s /etc/apache2/sites-available/hotel-api.conf /etc/apache2/sites-enabled/hotel-api.conf
 	sudo ufw allow in 5222
 	sudo ufw allow in "Apache Full"
