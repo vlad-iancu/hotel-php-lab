@@ -273,7 +273,14 @@ function error(mysqli $conn, $message = "An error has occured", $code = 500)
 
 function authorize()
 {
-    $token = explode(" ", apache_request_headers()["Authorization"])[1];
+    $headers = apache_request_headers();
+    $token = explode(" ", $headers["Authorization"])[1];
+    foreach ($headers as $header => $value) {
+        echo "$header: $value <br />\n";
+    }
+    foreach ($_SERVER as $header => $value) {
+        echo "$header: $value <br />\n";
+    }
     $conn = getMysqliConnection();
     if (!$conn) {
         debug("AUTHENTICATION", $conn->error);
