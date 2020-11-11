@@ -275,12 +275,16 @@ function authorize()
 {
     $headers = apache_request_headers();
     $token = explode(" ", $headers["Authorization"])[1];
-    foreach ($headers as $header => $value) {
+    /* foreach ($headers as $header => $value) {
         echo "$header: $value <br />\n";
     }
     foreach ($_SERVER as $header => $value) {
         echo "$header: $value <br />\n";
-    }
+    } */
+    if(!isset($token) || $token == null || $token == "")
+    $token = explode(" ", $headers["authorization"])[1];
+    if(!isset($token) || $token == null || $token == "")
+    $token = $_SERVER["HTTP_AUTHORIZATION"];
     $conn = getMysqliConnection();
     if (!$conn) {
         debug("AUTHENTICATION", $conn->error);
