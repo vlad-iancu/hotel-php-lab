@@ -4,13 +4,13 @@
     
     function addHotelIdentityRoutes(Router $router) {
 
-        $router->get("/hotel", true, function($body, $userId) {
+        $router->get("/hotel", true, function($body, $userId, $email) {
 
         });
-        $router->delete("/hotel", true, function($body, $userId) {
+        $router->delete("/hotel", true, function($body, $userId, $email) {
 
         });
-        $router->post("/hotel", true, function($body, $userId) {
+        $router->post("/hotel", true, function($body, $userId, $email) {
             $response = array();
             if(!isset($userId) || $userId <= 0) {
                 http_response_code(401);
@@ -24,7 +24,7 @@
             $response = createHotel($userId, $body["name"]);
             echo json_encode($response); 
         });
-        $router->put("/rename_hotel", true, function($body, $userId) {
+        $router->put("/rename_hotel", true, function($body, $userId, $email) {
             $response = array();
             if(!isset($body["new_name"]) || is_string($body["new_name"])) {
                 http_response_code(400);
@@ -42,22 +42,30 @@
             echo json_encode($response);
 
         });
-        $router->put("/add_hotel_admin", true, function($body, $userId) {
+        $router->post("/hotel_admin", true, function($body, $userId, $email) {
+            $response = array();
+            if(!isset($body["email"]) || !$body["email"]) {
+                $response = array("status" => "error", "message" => "Field email not set");
+            }
+            if(!isset($body["hotel_id"]) || !$body["hotel_id"]) {
+                $response  =array("status" => "error", "message" => "Field hotel_id not set");
+            }
+            $response = addHotelAdmin($userId, $body["hotel_id"], $body["email"]);
+            echo json_encode($response);
+        });
+        $router->put("/hotel_visibility", true, function($body, $userId, $email) {
 
         });
-        $router->put("/hotel_visibility", true, function($body, $userId) {
+        $router->post("/create_worker_group", true, function($body, $userId, $email) {
 
         });
-        $router->post("/create_worker_group", true, function($body, $userId) {
+        $router->put("/add_worker_to_group", true, function($body, $userId, $email) {
 
         });
-        $router->put("/add_worker_to_group", true, function($body, $userId) {
+        $router->put("/remove_worker_from_group", true, function($body, $userId, $email) {
 
         });
-        $router->put("/remove_worker_from_group", true, function($body, $userId) {
-
-        });
-        $router->delete("/remove_worker_group", true, function($body, $uesrId) {
+        $router->delete("/remove_worker_group", true, function($body, $userId, $email) {
 
         });
     }

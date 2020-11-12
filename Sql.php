@@ -10,11 +10,11 @@
         }
         public function next() {
             $row = mysqli_fetch_assoc($this->result);
-            if($row != null)
+            if($row != null && $row)
                 return $row;
             else {
                 mysqli_stmt_close($this->stmt);
-                return null;
+                return false;
             }
             
         }
@@ -27,10 +27,10 @@
         if($types && $params) {
             mysqli_stmt_bind_param($stmt, $types, ...$params);
         }
-        mysqli_stmt_execute($stmt);
+        return mysqli_stmt_execute($stmt);
     }
 
-    function execStatementResult($conn, $sql, $types, ...$params) {
+    function execStatementResult($conn, $sql, $types, ...$params): Cursor {
         $stmt = mysqli_prepare($conn, $sql);
         if( ($types == null) != ($params == null)) {
             return null;

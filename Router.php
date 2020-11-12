@@ -32,11 +32,12 @@ class Router
         if ($matchingRoute->authorized) {
             if ($rt->method != "GET") {
                 $body = json_decode(file_get_contents("php://input"), true);
-                $userid = ($this->authorize)();
-                $invokeBlock($body, $userid);
+                $cred = ($this->authorize)();
+
+                $invokeBlock($body, $cred["userId"], $cred["email"]);
             } else {
-                $userid = ($this->authorize)();
-                $invokeBlock($userid);
+                $cred = ($this->authorize)();
+                $invokeBlock($body, $cred["userId"], $cred["email"]);
             }
         } else {
             if ($matchingRoute->method != "GET") {
