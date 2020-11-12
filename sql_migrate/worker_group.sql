@@ -1,0 +1,11 @@
+CREATE TABLE WORKER_GROUP (
+    hotelId INT,
+    permissionId INT,
+    PRIMARY KEY(hotelId, permissionId),
+
+    CONSTRAINT WORKER_GROUP_TO_HOTEL FOREIGN KEY(hotelId)
+    REFERENCES HOTEL(hotelId),
+
+    CONSTRAINT WORKER_GROUP_TO_PERMISSION FOREIGN KEY(permissionId)
+    REFERENCES PERMISSION(permissionId)
+);
