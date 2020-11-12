@@ -290,7 +290,7 @@ function authorize()
         debug("AUTHENTICATION", $conn->error);
         return -1;
     }
-    $sql = "SELECT TOKEN.userId FROM TOKEN INNER JOIN USER ON USER.userId = TOKEN.userId WHERE value = '$token';";
+    $sql = "SELECT TOKEN.userId, USER.email FROM TOKEN JOIN USER ON USER.userId = TOKEN.userId WHERE value = '$token';";
     $auth = mysqli_prepare($conn, $sql);
     if (!$auth) {
         debug("AUTHENTICATION", $conn->error." stmt open");
@@ -304,7 +304,7 @@ function authorize()
         debug("AUTHENTICATION", $conn->error." stmt execute");
         return -1;
     }
-    if (!mysqli_stmt_bind_result($auth, $userId)) {
+    if (!mysqli_stmt_bind_result($auth, $userId, $email)) {
         debug("AUTHENTICATION", $conn->error." stmt bind result");
         return -1;
     }
@@ -325,7 +325,7 @@ function authorize()
         return -1;
     }
     debug("AUTHENTICATION", "Returning userId: $userId");
-    return $userId;
+    return array("userId" => $userId, "email" => $email);
 }
 
 function generateToken()

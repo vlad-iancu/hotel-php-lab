@@ -1,6 +1,7 @@
 <?php
     require_once './MySqlConnect.php';
     require_once './Log.php';
+    require_once './Sql.php';
     define("TAG", "CREATE_HOTEL");
     function createHotel($creatorId, $hotelName) {
         debug(TAG, "Creating hotel with user $creatorId and name $hotelName");
@@ -141,6 +142,40 @@
 
         return array("status" => "ok", "message" => "Hotel renamed successfully");
 
+    }
+
+    function addHotelAdmin($userId, $hotelId, $newAdminEmail) {
+        $conn = getMysqliConnection();
+        if(!$conn) {
+            http_response_code(500);
+            return array("status" => "error", "An error has occured");
+        }
+        mysqli_autocommit(false);
+        mysqli_begin_transaction($conn);
+
+        $result = execStatementResult($conn, "SELECT adminPermissionId FROM HOTEL WHERE hotelId = ?", "i", $hotelId);
+        $adminPermission = $result->next()["adminPermissionId"];
+        if(!$adminPermission) {
+            return error($conn, "The given hotel does not exist",404);
+        }
+
+        $result = execStatementResult($conn, "SELECT * FROM PERMISSION_GRANT WHERE permissionId = ? AND userId = ?", "ii",$adminPermission,$userId);
+        $grant = $result->next();
+        if(!$grant) {
+            return error($conn, "You need to be an admin in order to add other admins", 401);
+        }
+        $result = execStatementResult($conn, "SELECT userId FROM USER WHERE email = ?", "s", $newAdminEmail);
+        $newAdminId = $result->next()["userId"];
+
+        $result = execStatement($conn, "INSERT INTO PERMISSION_GRANT(userId, permissionId) VALUES(?,?)","ii",$newAdminId,$adminPermission);
+        if(!$result) {
+            return error($conn, "Could not grant the permission", 500);
+        }
+
+        mysqli_commit($conn);
+        mysqli_autocommit(true);
+        mysqli_close($conn);
+        return array("status" => "ok", "message" => "Hotel admin added successfully");
     }
 
     function hasPermission($conn, $userId, $permissionId) {
