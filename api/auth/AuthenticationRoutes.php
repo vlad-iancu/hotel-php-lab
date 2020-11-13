@@ -1,6 +1,6 @@
 <?php 
     require_once './Router.php';
-    require_once './auth/AuthenticationRepository.php';
+    require_once './api/auth/AuthenticationRepository.php';
     function addAuthenticationRoutes(Router $router) {
         //$router->get("/home", function() {
         //    echo "Home endpoint";
