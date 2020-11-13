@@ -178,6 +178,41 @@
         return array("status" => "ok", "message" => "Hotel admin added successfully");
     }
 
+    function setHotelVisibility($userId, $hotelId, $visibility) {
+        $conn = getMysqliConnection();
+        mysqli_autocommit($conn, false);
+        mysqli_begin_transaction($conn);
+        
+        $result = execStatementResult($conn, "SELECT adminPermissionId FROM HOTEL WHERE hotelId = ?","i",$hotelId);
+        $adminPermission = $result->next()["adminPermissionId"];
+
+        $result = execStatementResult($conn, "SELECT * FROM PERMISSION_GRANT WHERE permissionId = ? AND userId = ?", "ii",$adminPermission, $userId);
+        $grant = $result->next();
+
+        if(!$grant) {
+            return array("status" => "error", "message" => "You need to be an admin in order to set the hotel visibility");
+        }
+
+        $visibilityPermissionId = 0;
+        switch($visibility) {
+            case "anonymus": $visibilityPermissionId = 1; break;
+            case "authenticated": $visibilityPermissionId = 2; break;
+            default: $visibilityPermissionId = false;
+        }
+
+        if(!$visibilityPermissionId) {
+            return error($conn, "field visibility must be either anonymus or authenticated");
+        }
+
+        execStatement($conn, "UPDATE HOTEL SET viewHotelPermissionId = ? WHERE hotelId = ?","ii",$visibilityPermissionId, $hotelId);
+
+        mysqli_commit($conn);
+        mysqli_autocommit($conn, true);
+        mysqli_close($conn);
+        return array("status" => "ok", "message" => "Hotel visibility changed successfully");
+
+    }
+
     function hasPermission($conn, $userId, $permissionId) {
         if(!isset($conn) || is_bool($permissionId)) {
             return -1;

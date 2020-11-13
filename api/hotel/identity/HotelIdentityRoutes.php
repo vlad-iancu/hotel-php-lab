@@ -1,11 +1,11 @@
 <?php 
     require_once './Router.php';
-    require_once './hotel/identity/HotelIdentityRepository.php';
+    require_once './api//hotel/identity/HotelIdentityRepository.php';
     
     function addHotelIdentityRoutes(Router $router) {
 
         $router->get("/hotel", true, function($body, $userId, $email) {
-
+            
         });
         $router->delete("/hotel", true, function($body, $userId, $email) {
 
@@ -54,19 +54,15 @@
             echo json_encode($response);
         });
         $router->put("/hotel_visibility", true, function($body, $userId, $email) {
-
-        });
-        $router->post("/create_worker_group", true, function($body, $userId, $email) {
-
-        });
-        $router->put("/add_worker_to_group", true, function($body, $userId, $email) {
-
-        });
-        $router->put("/remove_worker_from_group", true, function($body, $userId, $email) {
-
-        });
-        $router->delete("/remove_worker_group", true, function($body, $userId, $email) {
-
+            $response = array();
+            if(!isset($body["visibility"]) || !$body["visibility"]) {
+                $response = array("status" => "error", "message" => "Field visibility not set");
+            }
+            if(!isset($body["hotel_id"]) || !$body["hotel_id"]) {
+                $response = array("status" => "error", "message" => "Field hotel_id not set");
+            }
+            $response = setHotelVisibility($userId, $body["hotel_id"], $body["visibility"]);
+            echo json_encode($response);
         });
     }
 
