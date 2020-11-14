@@ -38,8 +38,14 @@
         if($types && $params) {
             mysqli_stmt_bind_param($stmt, $types, ...$params);
         }
-        mysqli_stmt_execute($stmt);
+        $execute = mysqli_stmt_execute($stmt);
+        if(!$execute) {
+            return false;
+        }
         $result = mysqli_stmt_get_result($stmt);
+        if(!$result) {
+            return false;
+        }
         return new Cursor($stmt, $result);
     }
 

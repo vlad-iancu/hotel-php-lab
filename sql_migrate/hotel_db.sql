@@ -79,18 +79,16 @@ CREATE TABLE WORKER_GROUP (
 CREATE TABLE ROOM (
     roomId INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
     hotelId INT,
-    readPermissionId INT,
     writePermissionId INT,
     deletePermissionId INT,
     cancelBookingPermissionId INT,
+    price INT,
+    name VARCHAR(64)
     
     CONSTRAINT ROOM_HOTEL FOREIGN KEY (hotelId)
     REFERENCES HOTEL(hotelId),
     
     CONSTRAINT CANCEL_BOOKING FOREIGN KEY (cancelBookingPermissionId)
-    REFERENCES PERMISSION(permissionId),
-    
-    CONSTRAINT ROOM_READ_PERMISSION FOREIGN KEY (readPermissionId)
     REFERENCES PERMISSION(permissionId),
     
     CONSTRAINT ROOM_WRITE_PERMISSION FOREIGN KEY (writePermissionId)

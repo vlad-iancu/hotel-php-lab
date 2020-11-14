@@ -24,6 +24,7 @@
             $response = createHotel($userId, $body["name"]);
             echo json_encode($response); 
         });
+
         $router->put("/rename_hotel", true, function($body, $userId, $email) {
             $response = array();
             if(!isset($body["new_name"]) || is_string($body["new_name"])) {
@@ -42,6 +43,7 @@
             echo json_encode($response);
 
         });
+
         $router->post("/hotel_admin", true, function($body, $userId, $email) {
             $response = array();
             if(!isset($body["email"]) || !$body["email"]) {
@@ -53,6 +55,7 @@
             $response = addHotelAdmin($userId, $body["hotel_id"], $body["email"]);
             echo json_encode($response);
         });
+
         $router->put("/hotel_visibility", true, function($body, $userId, $email) {
             $response = array();
             if(!isset($body["visibility"]) || !$body["visibility"]) {
@@ -63,6 +66,10 @@
             }
             $response = setHotelVisibility($userId, $body["hotel_id"], $body["visibility"]);
             echo json_encode($response);
+        });
+
+        $router->get("/user_hotels", true, function($userId, $email) {
+            echo json_encode(getHotelsForUser($email));
         });
     }
 

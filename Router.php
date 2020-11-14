@@ -30,14 +30,14 @@ class Router
         }
         $invokeBlock = $matchingRoute->block;
         if ($matchingRoute->authorized) {
-            if ($rt->method != "GET") {
+            if ($matchingRoute->method != "GET") {
                 $body = json_decode(file_get_contents("php://input"), true);
                 $cred = ($this->authorize)();
 
                 $invokeBlock($body, $cred["userId"], $cred["email"]);
             } else {
                 $cred = ($this->authorize)();
-                $invokeBlock($body, $cred["userId"], $cred["email"]);
+                $invokeBlock($cred["userId"], $cred["email"]);
             }
         } else {
             if ($matchingRoute->method != "GET") {
