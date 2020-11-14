@@ -285,6 +285,7 @@ function authorize()
     $token = explode(" ", $headers["authorization"])[1];
     if(!isset($token) || $token == null || $token == "")
     $token = $_SERVER["HTTP_AUTHORIZATION"];
+    
     $conn = getMysqliConnection();
     if (!$conn) {
         debug("AUTHENTICATION", $conn->error);

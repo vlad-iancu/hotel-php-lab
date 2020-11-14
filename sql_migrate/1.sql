@@ -1,3 +1,4 @@
+USE hotel_db;
 CREATE TABLE WORKER_GROUP (
     hotelId INT,
     permissionId INT,

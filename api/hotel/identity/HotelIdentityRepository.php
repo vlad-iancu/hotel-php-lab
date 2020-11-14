@@ -297,4 +297,25 @@
 
         return true;
     }
+
+    function getHotelsForUser($email) {
+        $conn = getMysqliConnection();
+        mysqli_autocommit($conn, false);
+        mysqli_begin_transaction($conn);
+
+        $sql = "SELECT HOTEL.hotelId as id, HOTEL.hotelName as name FROM HOTEL JOIN PERMISSION ON HOTEL.adminPermissionId = PERMISSION.permissionId
+        WHERE (SELECT COUNT(*) FROM PERMISSION_GRANT JOIN USER ON PERMISSION_GRANT.userId = USER.userId
+        WHERE USER.email = ? AND PERMISSION_GRANT.permissionId = HOTEL.adminPermissionId) > 0";
+
+        $result = execStatementResult($conn, $sql, "s", $email);
+        $hotels = array();
+        while($row = $result->next()) {
+            array_push($hotels, $row);
+        }
+
+        mysqli_commit($conn);
+        mysqli_autocommit($conn, false);
+        mysqli_close($conn);
+        return array("status" => "ok", "hotels" => $hotels);
+    }
 ?>
