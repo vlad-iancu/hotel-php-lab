@@ -33,7 +33,6 @@ class Router
             if ($matchingRoute->method != "GET") {
                 $body = json_decode(file_get_contents("php://input"), true);
                 $cred = ($this->authorize)();
-
                 $invokeBlock($body, $cred["userId"], $cred["email"]);
             } else {
                 $cred = ($this->authorize)();

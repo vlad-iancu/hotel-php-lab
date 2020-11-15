@@ -18,6 +18,10 @@
             }
             
         }
+
+        public function close() {
+            mysqli_stmt_close($this->stmt);
+        }
     }
     function execStatement($conn, $sql, $types, ...$params) {
         $stmt = mysqli_prepare($conn, $sql);
@@ -27,7 +31,9 @@
         if($types && $params) {
             mysqli_stmt_bind_param($stmt, $types, ...$params);
         }
-        return mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return $result;
     }
 
     function execStatementResult($conn, $sql, $types, ...$params): Cursor {
