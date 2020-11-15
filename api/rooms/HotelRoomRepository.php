@@ -27,6 +27,28 @@
     
     }
 
+    function getRoomById($userId, $roomId) {
+        $conn = getMysqliConnection();
+        mysqli_autocommit($conn, false);
+        mysqli_begin_transaction($conn);
+
+        $result = execStatementResult($conn, "SELECT HOTEL.viewHotelPermissionId as pid FROM ROOM JOIN HOTEL ON ROOM.hotelId = HOTEL.hotelId WHERE ROOM.roomId = ?", "i", $roomId);
+        $permissionId = $result->next()["pid"];
+
+        $result = execStatementResult($conn, "SELECT * FROM PERMISSION_GRANT WHERE permissionId = ? AND userId = ?","ii",$permissionId,$userId);
+        if(!$result->next()) {
+            return error("You are not allowed to view this room");
+        }
+        $result = execStatementResult($conn, "SELECT hotelId as hotel_id, price as price, roomId as id, name as name FROM ROOM WHERE roomId = ?","i",$roomId);
+        $result = $result->next();
+
+        mysqli_commit($conn);
+        mysqli_autocommit($conn, true);
+
+        $result["status"] = "ok"; $result["message"] = "Success";
+        return $result;
+    }
+
     function addRoomToHotel($userId, $hotelId, $name, $price) {
         $conn = getMysqliConnection();
         mysqli_autocommit($conn, false);
@@ -106,11 +128,11 @@
             return error($conn, "You are not allowes to modify this room");
         }
 
-        execStatement($conn, "UPDATE ROOM SET price = ?, name = ? WHERE roomId = ?","iis",$newPrice,$newName,$roomId);
+        execStatement($conn, "UPDATE ROOM SET price = ?, name = ? WHERE roomId = ?","isi",$newPrice,$newName,$roomId);
 
         mysqli_commit($conn);
         mysqli_autocommit($conn, true);
-        return array("status" => "ok", "message" => "room price updated successfully");
+        return array("status" => "ok", "message" => "room updated successfully");
     }
 
     function setPermission() {

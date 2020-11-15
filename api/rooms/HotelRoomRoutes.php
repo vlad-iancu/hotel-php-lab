@@ -6,24 +6,29 @@
             $response = array();
             if(!isset($body["id"]) || !$body["id"]) {
                 $response = array("status" => "error", "message" => "Field id is not set");
-            }
+            } else
             $response = getRoomsForHotel($body["id"], $userId);
             echo json_encode($response);
         });
-        $router->get("/room", true, function($body, $userId, $email) {
-
+        $router->post("/fetch_room", true, function($body, $userId, $email) {
+            $response = array();
+            if(!isset($body["id"]) || !is_int($body["id"])) {
+                $response = array("status" => "error", "message" => "Field id is not set");
+            } else
+            $response = getRoomById($userId, $body["id"]);
+            echo json_encode($response);
         });
         $router->post("/room", true, function($body, $userId, $email) {
             $response = array();
             if(!isset($body["name"]) || !is_string($body["name"])) {
                 $response = array("status" => "error", "message" => "Field name is not set");
-            }
+            } else
             if(!isset($body["hotel_id"]) || !is_int($body["hotel_id"])) {
                 $response = array("status" => "error", "message" => "Field hotel_id is not set");
-            }
+            } else
             if(!isset($body["price"]) || !is_int($body["price"])) {
                 $response = array("status" => "error", "message" => "Field price is not set");
-            }
+            } else
             $response = addRoomToHotel($userId, $body["hotel_id"], $body["name"], $body["price"]);
             echo json_encode($response);
         });
@@ -33,13 +38,13 @@
             if(!isset($body["id"]) || !is_int($body["id"])) {
                 $response = array("status" => "error", "message" => "Field id is not set");
             } else
-            if(!isset($body["name"]) ||!is_array($body["name"])) {
-                $response = array("status" => "error", "message" => "Field room is not set");
+            if(!isset($body["name"]) ||!is_string($body["name"])) {
+                $response = array("status" => "error", "message" => "Field name is not set");
             } else
-            if(!isset($body["price"]) ||!is_array($body["price"])) {
+            if(!isset($body["price"]) ||!is_int($body["price"])) {
                 $response = array("status" => "error", "message" => "Field price is not set");
             } else
-            $response = updateRoom($userId,$body["id"],$body["name"],$body["price"]);
+            $response = updateRoom($userId,$body["id"],$body["price"],$body["name"]);
             echo json_encode($response);
 
         });
@@ -47,7 +52,7 @@
             $response = array();
             if(!isset($body["id"]) || !is_int($body["id"])) {
                 $response = array("status" => "error", "message" => "Field id not set");
-            }
+            } else
             $response = deleteRoom($body["id"]);
             echo json_encode($response);
         });
