@@ -1,4 +1,8 @@
 Credentials.php
 /requests
 /logs
+<<<<<<< HEAD
 *.ini
+=======
+*.ini
+>>>>>>> master
