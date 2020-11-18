@@ -1,3 +1,4 @@
 Credentials.php
 /requests
 /logs
+*.ini
