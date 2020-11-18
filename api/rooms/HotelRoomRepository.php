@@ -6,7 +6,9 @@
         $conn = getMysqliConnection();
         mysqli_autocommit($conn, false);
         mysqli_begin_transaction($conn);
-
+        if(!hotelExists($conn, $hotelId)) {
+            return error($conn, "There is no hotel with the id: $hotelId", 404);
+        }
         $result = execStatementResult($conn, "SELECT viewHotelPermissionId FROM HOTEL WHERE hotelId = ?","i",$hotelId);
         $viewHotelPermission = $result->next()["viewHotelPermissionId"];
 
@@ -24,7 +26,6 @@
         mysqli_autocommit($conn, true);
         mysqli_close($conn);
         return array("status" => "ok", "rooms" => $rooms);
-    
     }
 
     function getRoomById($userId, $roomId) {
@@ -135,8 +136,12 @@
         return array("status" => "ok", "message" => "room updated successfully");
     }
 
-    function setPermission() {
-
+    function hotelExists($conn, $hotelId) {
+        $result = execStatementResult($conn, "SELECT * FROM HOTEL WHERE hotelId = ?", "i", $hotelId);
+        if(!$result->next()) {
+            return false;
+        }
+        return true;
     }
 
 ?>
