@@ -2,144 +2,100 @@
     require_once './MySqlConnect.php';
     require_once './Log.php';
     require_once './Sql.php';
-    define("TAG", "CREATE_HOTEL");
+    require_once './api/Utils.php';
+    require_once './api/rooms/HotelRoomRepository.php';
+    define("TAG", "DELETE_HOTEL");
     function createHotel($creatorId, $hotelName) {
         debug(TAG, "Creating hotel with user $creatorId and name $hotelName");
         $conn = getMysqliConnection();
-        if(!mysqli_autocommit($conn, false)) {
-            debug(TAG, "Connection failed");
-            return error($conn);
+        mysqli_autocommit($conn, false);
+        mysqli_begin_transaction($conn);
+        if(!$conn) {
+            return error($conn, "Could not connect to the database", 500);
         }
-        if(!mysqli_begin_transaction($conn)) {
-            return error($conn);
-        }
-        $permissionSql = "INSERT INTO PERMISSION(permissionName) VALUES(?);";
-        $addPermission = mysqli_prepare($conn, $permissionSql);
-        if(!$addPermission) {
-            debug(TAG, "Preparing permission insert failed");
-            return error($conn);
-        }
-        $permissionName = $hotelName."-Admin";
-        if(!mysqli_stmt_bind_param($addPermission, "s",$permissionName)) {
-            debug(TAG, "Binding params for permission insert failed".$addPermission->error);
-            return error($conn);
-            
-        }
-        if(!mysqli_stmt_execute($addPermission)) {
-            debug(TAG, "Permission insert failed");
-            return error($conn);
-            
+        $success = execStatement($conn, "INSERT INTO PERMISSION(permissionName) VALUES(?)", "s", "HotelAdmin");
+        if(!$success) {
+            return error($conn, "Could not add the admin permission for the hotel", 500);
         }
         $permissionId = mysqli_insert_id($conn);
-        debug(TAG, "Added permission with id $permissionId");
         if(!$permissionId) {
-            debug(TAG, "Could not get the inserted permission id");
-            return error($conn);
-            
+            return error($conn, "Could not get the admin permission for the hotel", 500);
         }
-        if(!mysqli_stmt_close($addPermission)) {
-            return error($conn);
-            
+
+        $success = execStatement($conn, "INSERT INTO PERMISSION_GRANT(userId, permissionId) VALUES(?,?);","ii",$creatorId, $permissionId);
+        if(!$success || mysqli_affected_rows($conn)) {
+            return error($conn, "Could not grant the admin permission to the user", 500);
         }
-        debug(TAG,"Added admin permission");
-        $permissionGrantSql = "REPLACE INTO PERMISSION_GRANT VALUES(?,?);";
-        $permissionGrant = mysqli_prepare($conn, $permissionGrantSql);
-        if(!$permissionGrant) {
-            debug(TAG, "Preparing permission grant insert failed");
-            return error($conn);
+
+        $success = execStatement($conn, "INSERT INTO HOTEL(hotelName, adminPermissionId, viewHotelPermissionId, createRoomPermissionId) VALUES(?,?,1,?)",
+        "sii", $hotelName, $permissionId, $permissionId);
+        if(!$success) {
+            return error($conn, "Hotel already exists", 400);
         }
-        if(!mysqli_stmt_bind_param($permissionGrant, "ii",$permissionId, $creatorId)) {
-            debug(TAG, "Binding params for permission grant insert failed".$addPermission->error);
-            return error($conn);
-        }
-        if(!mysqli_stmt_execute($permissionGrant)) {
-            debug(TAG, "Permission grant insert failed".$addPermission->error);
-            return error($conn);
-        }
-        if(!mysqli_stmt_close($permissionGrant)) {
-            debug(TAG, "closing permission grant insert statement failed".$addPermission->error);
-            return error($conn);
-        }
-        debug(TAG, "Granted permissionId $permissionId to userId $creatorId");
-        $hotelSql = "INSERT INTO HOTEL(hotelName, adminPermissionId, viewHotelPermissionId, createRoomPermissionId) VALUES(?,?,1,?);";
-        $hotel = mysqli_prepare($conn, $hotelSql);
-        if(!$hotel) {
-            debug(TAG, "Preparing hotel insert failed");
-            return error($conn);
-            
-        }
-        if(!mysqli_stmt_bind_param($hotel, "sii", $hotelName, $permissionId, $permissionId)) {
-            debug(TAG, "Binding params for hotel insert failed");
-            return error($conn);
-            
-        }
-        if(!mysqli_stmt_execute($hotel)) {
-            debug(TAG, "Hotel insert failed");
-            return error($conn);
-            
-        }
+
         $hotelId = mysqli_insert_id($conn);
-        if(!mysqli_stmt_close($hotel)) {
-            return error($conn);
-            
-        }
-        debug(TAG, "Created hotel");
         mysqli_commit($conn);
         mysqli_autocommit($conn, true);
         mysqli_close($conn);
-        $hotelArray = array("name" => $hotelName, "id" => $hotelId);
-        return array("status" => "ok", "message" => "Hotel created successfully", "hotel" => $hotelArray);
+        return array("status" => "ok", "message" => "hotel added successfully", "name" => $hotelName);
+    }
 
+    function deleteHotel($userId, $hotelId) {
+        $conn = getMysqliConnection();
+        mysqli_autocommit($conn, false);
+        mysqli_begin_transaction($conn);
+        echo $userId."\n";
+        $result = execStatementResult($conn, "SELECT * FROM PERMISSION_GRANT WHERE permissionId = (SELECT adminPermissionId FROM HOTEL WHERE hotelId = ?) AND userId = ?", "ii", $hotelId, $userId);
+        $row = $result->next();
+        if(!$row) {
+            return error($conn, "You are not allowed to delete a hotel you don't own", 401);
+        }
+        $adminPermission = $row["permissionId"];
+        debug(TAG, "Authorized: Admin permission is $adminPermission");
+        execStatement($conn, "DELETE FROM ROOM WHERE hotelId = ?", "i", $hotelId);
+        $result = execStatementResult($conn, "SELECT permissionId FROM WORKER_GROUP WHERE hotelId = ?", "i", $hotelId);
+        $groupIds = array();
+        while($row = $result->next()) {
+            array_push($row["permissionId"]);
+        }
+        foreach($groupIds as $groupPermission) {
+            execStatement($conn, "DELETE FROM PERMISSION WHERE permissionId = ? ", "i", $groupPermission);
+        }
+        execStatement($conn, "DELETE FROM WORKER_GROUP WHERE hotelId = ?", "i", $hotelId);
+        if(!$result = execStatement($conn, "DELETE FROM HOTEL WHERE hotelId = ?", "i", $hotelId)) {
+            return error($conn, "The requested hotel does not exist", 404);
+        }
+        execStatement($conn, "DELETE FROM PERMISSION_GRANT WHERE permissionId = ?", "i", $adminPermission);
+        execStatement($conn, "DELETE FROM PERMISSION WHERE permissionId = ?","i",$adminPermission);
+        
+        mysqli_commit($conn);
+        mysqli_autocommit($conn, false);
+        mysqli_close($conn);
+        return array("status" => "ok", "message" => "Hotel deleted successfully");
     }
 
     function renameHotel($userId, $hotelId, $newName) {
         $conn = getMysqliConnection();
-        if(!$conn) {
-            return array("status" => "error", "message" => "Could not connect to the database");
-        }
         mysqli_autocommit($conn, false);
         mysqli_begin_transaction($conn);
-
-        $getAdminSql = "SELECT adminPermissionId FROM HOTEL WHERE hotelId = ?";
-        $getPermission = mysqli_prepare($conn, $getAdminSql);
-
-        mysqli_stmt_bind_param($getPermission, "i", $hotelId);
-        if(!mysqli_stmt_execute($getPermission)) {
-            return error($conn, "Could not get the admin permission for this hotel");
+        $permissionId = execStatementResult($conn,"SELECT adminPermissionId as pid FROM HOTEL WHERE hotelId = ?","i",$hotelId)->next()["pid"];
+        if(!$permissionId) {
+            return error($conn, "There is no hotel with the given id", 404);
         }
-        mysqli_stmt_bind_result($getPermission, $permissionId);
-        if(!mysqli_stmt_fetch($getPermission)) {
-            return error($conn);
+        $result = execStatementResult($conn, "SELECT * FROM PERMISSION_GRANT WHERE userId = ? AND permissionId = ?","ii",$userId, $permissionId);
+        if(!$result->next()) {
+            return error($conn, "You are not allowed to change this hotel", 403);
         }
-        mysqli_stmt_close($getPermission);
-
-        $checkPermissionSql = "SELECT * FROM PERMISSION_GRANT WHERE userId = ? AND permissionId = ?";
-        $checkPermission = mysqli_prepare($conn, $checkPermissionSql);
-        mysqli_stmt_bind_param($checkPermission, "ii", $userId, $permissionId);
-        if(!mysqli_stmt_execute($checkPermission)) {
-            return error($conn, "Could not check the admin permission for this hotel");
+        $success = execStatement($conn, "UPDATE HOTEL SET hotelName = ? WHERE hotelId = ?", "si", $newName, $hotelId);
+        if(!$success) {
+            return error($conn, "Could not update the hotel name", 500);
         }
-        
-        mysqli_stmt_bind_result($checkPermission, $resultUser, $resultPermission);
-        if(!mysqli_stmt_fetch($checkPermission)) {
-            echo $userId;
-            return error($conn, "You do not have the permission to rename this hotel");
+        if(mysqli_affected_rows($conn) == 0) {
+            return error($conn, "There is no hotel with the given id", 404);
         }
-        mysqli_stmt_close($checkPermission);
-
-        $renameSql = "UPDATE HOTEL SET hotelName = ? WHERE hotelId = ?";
-        $rename = mysqli_prepare($conn, $renameSql);
-        mysqli_stmt_bind_param($rename, "si", $newName, $hotelId);
-        if(!mysqli_stmt_execute($rename)) {
-            return error($conn, "Could not rename the hotel");
-        }
-        mysqli_stmt_close($rename);
-
         mysqli_commit($conn);
         mysqli_autocommit($conn, true);
         mysqli_close($conn);
-
-
         return array("status" => "ok", "message" => "Hotel renamed successfully");
 
     }
@@ -156,16 +112,21 @@
         $result = execStatementResult($conn, "SELECT adminPermissionId FROM HOTEL WHERE hotelId = ?", "i", $hotelId);
         $adminPermission = $result->next()["adminPermissionId"];
         if(!$adminPermission) {
-            return error($conn, "The given hotel does not exist",404);
+            return error($conn, "Theere is no hotel with id $hotelId",404);
         }
 
         $result = execStatementResult($conn, "SELECT * FROM PERMISSION_GRANT WHERE permissionId = ? AND userId = ?", "ii",$adminPermission,$userId);
         $grant = $result->next();
         if(!$grant) {
-            return error($conn, "You need to be an admin in order to add other admins", 401);
+            return error($conn, "You need to be an admin in order to add other admins", 403);
         }
         $result = execStatementResult($conn, "SELECT userId FROM USER WHERE email = ?", "s", $newAdminEmail);
-        $newAdminId = $result->next()["userId"];
+        $row = $result->next();
+        $newAdminId = $row["userId"];
+        if(!$newAdminId) {
+            return error($conn, "There is no user with the email $newAdminEmail", 404);
+        }
+        
 
         $result = execStatement($conn, "INSERT INTO PERMISSION_GRANT(userId, permissionId) VALUES(?,?)","ii",$newAdminId,$adminPermission);
         if(!$result) {
@@ -182,15 +143,16 @@
         $conn = getMysqliConnection();
         mysqli_autocommit($conn, false);
         mysqli_begin_transaction($conn);
-        
         $result = execStatementResult($conn, "SELECT adminPermissionId FROM HOTEL WHERE hotelId = ?","i",$hotelId);
-        $adminPermission = $result->next()["adminPermissionId"];
-
+        $row = $result->next();
+        $adminPermission = $row["adminPermissionId"];
+        if(!$adminPermission) {
+            return error($conn, "There is no hotel with id $userId", 404);
+        }
         $result = execStatementResult($conn, "SELECT * FROM PERMISSION_GRANT WHERE permissionId = ? AND userId = ?", "ii",$adminPermission, $userId);
         $grant = $result->next();
-
         if(!$grant) {
-            return array("status" => "error", "message" => "You need to be an admin in order to set the hotel visibility");
+            return error($conn, "You need to be an admin in order to set the hotel visibility", 403);
         }
 
         $visibilityPermissionId = 0;
@@ -205,96 +167,51 @@
         }
 
         execStatement($conn, "UPDATE HOTEL SET viewHotelPermissionId = ? WHERE hotelId = ?","ii",$visibilityPermissionId, $hotelId);
+        if(mysqli_affected_rows($conn) == 0) {
+            return error($conn, "The respective hotel was not updated", 500);
+        }
 
         mysqli_commit($conn);
         mysqli_autocommit($conn, true);
         mysqli_close($conn);
         return array("status" => "ok", "message" => "Hotel visibility changed successfully");
-
     }
 
-    function hasPermission($conn, $userId, $permissionId) {
-        if(!isset($conn) || is_bool($permissionId)) {
-            return -1;
+    
+
+    function getHotelsForUser($email) {
+        $conn = getMysqliConnection();
+        mysqli_autocommit($conn, false);
+        mysqli_begin_transaction($conn);
+        if(!userExists($conn, $email)) {
+            return error($conn, "There is no user with email: $email", 404);
         }
-        if(!isset($userId) || !is_int($userId)) {
-            return -1;
-        }
-        if(!isset($permissionId) || !is_int($permissionId)) {
-            return -1;
-        }
-        $sql = "SELECT * FROM PERSMISSION_GRANT WHERE permissionId = ? AND userId = ?;";
-        $permission = mysqli_prepare($conn, $sql);
-        if(!$permission) {
-            return -1;
-        }
-        if(!mysqli_stmt_bind_param($permission, "ii",$permissionId, $userId)) {
-            mysqli_stmt_close($permission);
-            return -1;
-        }
-        if(!mysqli_stmt_execute($permission)) {
-            mysqli_stmt_close($permission);
-            return -1;
-        }
-        if(!mysqli_stmt_bind_result($permission, $resultPermission, $resultUser)) {
-            mysqli_stmt_close($permission);
-            return -1;
-        }
-        if(!mysqli_stmt_fetch($permission)) {
-            mysqli_stmt_close($permission);
-            return false;
+        $sql = "SELECT HOTEL.hotelId as id, HOTEL.hotelName as name FROM HOTEL JOIN PERMISSION ON HOTEL.adminPermissionId = PERMISSION.permissionId
+        WHERE (SELECT COUNT(*) FROM PERMISSION_GRANT JOIN USER ON PERMISSION_GRANT.userId = USER.userId
+        WHERE USER.email = ? AND PERMISSION_GRANT.permissionId = HOTEL.adminPermissionId) > 0";
+
+        $result = execStatementResult($conn, $sql, "s", $email);
+        $hotels = array();
+        while($row = $result->next()) {
+            array_push($hotels, $row);
         }
 
-        mysqli_stmt_close($permission);
-        return true;
-
-
+        mysqli_commit($conn);
+        mysqli_autocommit($conn, false);
+        mysqli_close($conn);
+        return array("status" => "ok", "hotels" => $hotels);
     }
 
-    function addPermission($conn, $userId, $permissionId) {
-        $sql = "INSERT INTO PERMISSION_GRANT VALUES(?,?) ON DUPLICATE KEY UPDATE;";
-        $add = mysqli_prepare($conn, $sql);
-        if(!$add) {
+    function userExists($conn, $key) {
+        $result = null;
+        if(is_int($key))
+            $result = execStatementResult($conn, "SELECT * FROM USER WHERE userId = ?", "i", $key);
+        if(is_string($key))
+            $result = execStatementResult($conn, "SELECT * FROM USER WHERE email = ?", "s", $key);
+        if(!$result->next())
             return false;
-        }
-        if(!mysqli_stmt_bind_param($add, "ii", $permissionId, $userId)) {
-            return false;
-        }
-        if(!mysqli_stmt_execute($add)) {
-            return false;
-        }
-        if(!mysqli_stmt_close($add)) {
-            return false;
-        }
-        
+
         return true;
     }
 
-    function removePermission($conn, $userId, $permissionId) {
-        if(!isset($conn) || is_bool($conn)) {
-            return false;
-        }
-        if(!isset($userId) || !is_int($userId)) {
-            return false;
-        }
-        if(!isset($permissionId) || !is_int($permissionId)) {
-            return false;
-        }
-        $sql = "DELETE FROM PERMISSION_GRANT WHERE permissionId = ? AND userId = ?;";
-        $add = mysqli_prepare($conn, $sql);
-        if(!$add) {
-            return false;
-        }
-        if(!mysqli_stmt_bind_param($add, "ii", $permissionId, $userId)) {
-            return false;
-        }
-        if(!mysqli_stmt_execute($add)) {
-            return false;
-        }
-        if(!mysqli_stmt_close($add)) {
-            return false;
-        }
-
-        return true;
-    }
 ?>

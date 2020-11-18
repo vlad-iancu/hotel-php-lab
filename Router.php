@@ -11,6 +11,7 @@ class Router
         $path = $_SERVER["REQUEST_URI"];
         $found = false;
         $matchingRoute = null;
+        echo $_SERVER["REQUEST_URI"];
         foreach ($this->routes as $rt) {
             if ($rt->method == $_SERVER["REQUEST_METHOD"]) {
                 if ($rt->path == $_SERVER["REQUEST_URI"]) {
@@ -30,14 +31,13 @@ class Router
         }
         $invokeBlock = $matchingRoute->block;
         if ($matchingRoute->authorized) {
-            if ($rt->method != "GET") {
+            if ($matchingRoute->method != "GET") {
                 $body = json_decode(file_get_contents("php://input"), true);
                 $cred = ($this->authorize)();
-
                 $invokeBlock($body, $cred["userId"], $cred["email"]);
             } else {
                 $cred = ($this->authorize)();
-                $invokeBlock($body, $cred["userId"], $cred["email"]);
+                $invokeBlock($cred["userId"], $cred["email"]);
             }
         } else {
             if ($matchingRoute->method != "GET") {
