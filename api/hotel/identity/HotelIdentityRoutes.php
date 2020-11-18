@@ -8,19 +8,24 @@
             
         });
         $router->delete("/hotel", true, function($body, $userId, $email) {
-
+            $response = array();
+            if(!isset($body["id"]) || !is_int($body["id"])) {
+                http_response_code(400);
+                $response = array("status" => "error", "message" => "Field id is not set");
+            } else
+            $response = deleteHotel($userId, $body["id"]);
+            echo json_encode($response);
         });
         $router->post("/hotel", true, function($body, $userId, $email) {
             $response = array();
             if(!isset($userId) || $userId <= 0) {
                 http_response_code(401);
                 $response = array("status" => "error", "message" => "Unauthorized");
-            }
+            } else
             if(!isset($body["name"])) {
                 http_response_code(400);
                 $response = array("status" => "error", "message" => "Field name not set");
-            }
-
+            } else
             $response = createHotel($userId, $body["name"]);
             echo json_encode($response); 
         });
@@ -30,15 +35,15 @@
             if(!isset($body["new_name"]) || is_string($body["new_name"])) {
                 http_response_code(400);
                 $response = array("status" => "error", "message" => "Field new_name not set");
-            }
+            } else
             if(!isset($body["id"]) || !is_int($body["id"])) {
                 http_response_code(400);
                 $response = array("status" => "error", "message" => "Field id not set");
-            }
+            } else
             if(!isset($userId) || $userId <= 0) {
                 http_response_code(401);
                 $response = array("status" => "error", "message" => "Unauthorized");
-            }
+            } else
             $response = renameHotel($userId, $body["id"], $body["new_name"]);
             echo json_encode($response);
 

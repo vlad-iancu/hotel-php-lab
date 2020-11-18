@@ -11,6 +11,7 @@ class Router
         $path = $_SERVER["REQUEST_URI"];
         $found = false;
         $matchingRoute = null;
+        echo $_SERVER["REQUEST_URI"];
         foreach ($this->routes as $rt) {
             if ($rt->method == $_SERVER["REQUEST_METHOD"]) {
                 if ($rt->path == $_SERVER["REQUEST_URI"]) {
