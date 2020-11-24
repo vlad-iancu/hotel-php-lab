@@ -8,13 +8,14 @@ class Router
 
     public function route()
     {
-        $path = $_SERVER["REQUEST_URI"];
+        $path = strtok($_SERVER["REQUEST_URI"], "?");
+        $params = array();
         $found = false;
         $matchingRoute = null;
-        echo $_SERVER["REQUEST_URI"];
+        //echo $_SERVER["REQUEST_URI"];
         foreach ($this->routes as $rt) {
             if ($rt->method == $_SERVER["REQUEST_METHOD"]) {
-                if ($rt->path == $_SERVER["REQUEST_URI"]) {
+                if ($rt->path == $path) {
                     if ($found) {
                         $this->notFound();
                         return;

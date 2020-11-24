@@ -70,10 +70,10 @@ CREATE TABLE WORKER_GROUP (
     PRIMARY KEY(hotelId, permissionId),
 
     CONSTRAINT WORKER_GROUP_TO_HOTEL FOREIGN KEY(hotelId)
-    REFERENCES HOTEL,
+    REFERENCES HOTEL(hotelId),
 
     CONSTRAINT WORKER_GROUP_TO_PERMISSION FOREIGN KEY(permissionId)
-    REFERENCES PERMISSION
+    REFERENCES PERMISSION(permissionId)
 );
 
 CREATE TABLE ROOM (
@@ -83,7 +83,7 @@ CREATE TABLE ROOM (
     deletePermissionId INT,
     cancelBookingPermissionId INT,
     price INT,
-    name VARCHAR(64)
+    name VARCHAR(64),
     
     CONSTRAINT ROOM_HOTEL FOREIGN KEY (hotelId)
     REFERENCES HOTEL(hotelId),
@@ -125,4 +125,4 @@ INSERT INTO PERMISSION(permissionName) VALUES('ANONYMUS');
 INSERT INTO PERMISSION(permissionName) VALUES('AUTHENTICATED');
 INSERT INTO PERMISSION(permissionName) VALUES('APP_ADMIN');
 
-GRANT ALL PRIVILEGES ON hotel_db.* TO 'hotel_db_user'@'127.0.0.1';
+GRANT ALL PRIVILEGES ON hotel_db.* TO 'hotel_db_user'@'localhost';
