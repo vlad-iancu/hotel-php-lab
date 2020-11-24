@@ -11,9 +11,10 @@
         //    $contact["email"] = "myemail@mail.com";
         //    echo json_encode($contact);
         //});
-        $router->get("/info", false, function() {
-            phpinfo();
+        $router->get("/user", true, function($userId, $email) {
+            echo json_encode(getUser($userId));
         });
+        
         $router->post("/register", false, function($body) {
             $body = json_decode(file_get_contents("php://input"), true);
             //echo getPasswordHash($body["password"]);
