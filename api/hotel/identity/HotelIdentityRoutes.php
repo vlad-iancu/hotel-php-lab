@@ -4,10 +4,10 @@
     
     function addHotelIdentityRoutes(Router $router) {
 
-        $router->get("/hotel", true, function($body, $userId, $email) {
+        $router->get("/hotel", true, function( $body, $userId, $email) {
             
         });
-        $router->delete("/hotel", true, function($body, $userId, $email) {
+        $router->delete("/hotel", true, function( $body, $userId, $email) {
             $response = array();
             if(!isset($body["id"]) || !is_int($body["id"])) {
                 http_response_code(400);
