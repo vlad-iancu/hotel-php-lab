@@ -220,6 +220,23 @@ function deleteUser($email, $password)
 
 }
 
+function getUser($userId) {
+    $conn = getMysqliConnection();
+    mysqli_autocommit($conn, false);
+    mysqli_begin_transaction($conn, false);
+
+    $result = execStatementResult($conn, "SELECT userId as id, email, userName as name FROM USER WHERE userId = ?", "i", $userId);
+    $row = $result->next();
+    if(!$row) {
+        error($conn, "Could not find the requested user", 404);
+    }
+    mysqli_commit($conn);
+    mysqli_autocommit($conn, true);
+    mysqli_close($conn);
+
+    return array("status" => "ok", "message" => "User fetched successfully", "id" => $userId, "user_name" => $row["name"], "email" => $row["email"]);
+}
+
 function changeUserName($email, $password, $newName)
 {
     $conn = getMysqliConnection();
@@ -284,7 +301,7 @@ function authorize()
     if(!isset($token) || $token == null || $token == "")
     $token = explode(" ", $headers["authorization"])[1];
     if(!isset($token) || $token == null || $token == "")
-    $token = $_SERVER["HTTP_AUTHORIZATION"];
+    $token = explode(" ",$_SERVER["HTTP_AUTHORIZATION"])[1];
     
     $conn = getMysqliConnection();
     if (!$conn) {
