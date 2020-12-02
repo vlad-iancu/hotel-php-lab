@@ -23,7 +23,9 @@
         }
 
         $success = execStatement($conn, "INSERT INTO PERMISSION_GRANT(userId, permissionId) VALUES(?,?);","ii",$creatorId, $permissionId);
-        if(!$success || mysqli_affected_rows($conn)) {
+        if(!$success || !mysqli_affected_rows($conn)) {
+            echo $permissionId.",";
+            echo $creatorId;
             return error($conn, "Could not grant the admin permission to the user", 500);
         }
 
@@ -66,7 +68,7 @@
             return error($conn, "The requested hotel does not exist", 404);
         }
         execStatement($conn, "DELETE FROM PERMISSION_GRANT WHERE permissionId = ?", "i", $adminPermission);
-        execStatement($conn, "DELETE FROM PERMISSION WHERE permissionId = ?","i",$adminPermission);
+        execStatement($conn, "DELETE FROM PERMISSION WHERE permissionId = ?","i", $adminPermission);
         
         mysqli_commit($conn);
         mysqli_autocommit($conn, false);
@@ -179,27 +181,50 @@
 
     
 
-    function getHotelsForUser($email) {
+    function getHotelsForUser($userId, $query, $page, $pageSize) {
         $conn = getMysqliConnection();
         mysqli_autocommit($conn, false);
         mysqli_begin_transaction($conn);
-        if(!userExists($conn, $email)) {
+        /* if(!userExists($conn, $email)) {
             return error($conn, "There is no user with email: $email", 404);
-        }
-        $sql = "SELECT HOTEL.hotelId as id, HOTEL.hotelName as name FROM HOTEL JOIN PERMISSION ON HOTEL.adminPermissionId = PERMISSION.permissionId
-        WHERE (SELECT COUNT(*) FROM PERMISSION_GRANT JOIN USER ON PERMISSION_GRANT.userId = USER.userId
-        WHERE USER.email = ? AND PERMISSION_GRANT.permissionId = HOTEL.adminPermissionId) > 0";
+        } */
+        error_log("Hotels for user: $userId");
+        $offset = ($page - 1) * $pageSize;
+        $limit = $pageSize;
+        if($query != "") {
+            $sql = "SELECT HOTEL.hotelId as id, HOTEL.hotelName as name, MATCH(HOTEL.hotelName) AGAINST(?) as relevance FROM HOTEL JOIN PERMISSION ON HOTEL.adminPermissionId = PERMISSION.permissionId
+            WHERE (SELECT COUNT(*) FROM PERMISSION_GRANT JOIN USER ON PERMISSION_GRANT.userId = USER.userId
+            WHERE USER.userId = ? AND PERMISSION_GRANT.permissionId = HOTEL.adminPermissionId) > 0 ORDER BY relevance DESC LIMIT ? OFFSET ?";
 
-        $result = execStatementResult($conn, $sql, "s", $email);
+            $result = execStatementResult($conn, $sql, "siii",$query, $userId, $limit, $offset);
+        }
+        else {
+            $sql = "SELECT HOTEL.hotelId as id, HOTEL.hotelName as name FROM HOTEL JOIN PERMISSION ON HOTEL.adminPermissionId = PERMISSION.permissionId
+            WHERE (SELECT COUNT(*) FROM PERMISSION_GRANT JOIN USER ON PERMISSION_GRANT.userId = USER.userId
+            WHERE USER.userId = ? AND PERMISSION_GRANT.permissionId = HOTEL.adminPermissionId) > 0 LIMIT ? OFFSET ?";
+
+            $result = execStatementResult($conn, $sql, "iii", $userId, $limit, $offset);
+        }
         $hotels = array();
-        while($row = $result->next()) {
+        $row = $result->next();
+        while($row ) {
             array_push($hotels, $row);
+            $row = $result->next();
         }
-
+        $totalHotels = execStatementResult($conn, "SELECT COUNT(*) as count FROM HOTEL", null)->next()["count"]; //bullshit
+        $numberOfPages = intdiv($totalHotels, $limit);
+        if($totalHotels % $limit != 0)
+            $numberOfPages++;
         mysqli_commit($conn);
         mysqli_autocommit($conn, false);
         mysqli_close($conn);
-        return array("status" => "ok", "hotels" => $hotels);
+        error_log("Hotel Count:".count($hotels));
+        return array(
+            "status" => "ok",
+            "hotels" => $hotels,
+            "pages" => $numberOfPages,
+            "hasMore" => count($hotels) >= $limit
+        );
     }
 
     function userExists($conn, $key) {

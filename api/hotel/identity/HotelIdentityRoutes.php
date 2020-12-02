@@ -74,7 +74,19 @@
         });
 
         $router->get("/user_hotels", true, function($userId, $email) {
-            echo json_encode(getHotelsForUser($email));
+            error_log("/user_hotels method ".$_SERVER["REQUEST_METHOD"]);
+            $page = $_GET["page"];
+            $pageSize = $_GET["pageSize"];
+            $query = $_GET["q"];
+            if(!$query) $query = "";
+            if(!$page) $page = 1;
+            if(!$pageSize) $pageSize = 2;
+            error_log("Query: $query");
+            error_log("Page Size: $pageSize");
+            error_log("Page: $page");
+            error_log("User id in routes: $userId");
+            echo json_encode(getHotelsForUser(
+                $userId, $query, $page, $pageSize));
         });
     }
 

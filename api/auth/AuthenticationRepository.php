@@ -74,7 +74,7 @@ function login(string $email, string $password)
 {
     $conn = getMysqliConnection();
     if (!$conn) {
-        return array("status" => "error", "message" => "Could not connect to the database ");
+        return array("status" => "error", "message" => "Could not connect to the database (login) ");
     }
     mysqli_autocommit($conn, false);
     mysqli_begin_transaction($conn);
@@ -176,47 +176,32 @@ function refresh($userId, $refreshToken)
 
 }
 
-function deleteUser($email, $password)
+function deleteUser($userId, $password)
 {
     $conn = getMysqliConnection();
-    if (!$conn) {
-        return array("status" => "error", "message" => DATABASE_ERROR);
-    }
-    if (!mysqli_autocommit($conn, false)) {
-        return array("status" => "error", "message" => DATABASE_ERROR);
-    }
-    if (!mysqli_begin_transaction($conn)) {
-        return array("status" => "error", "message" => DATABASE_ERROR);
-    }
+    mysqli_autocommit($conn, false);
+    mysqli_begin_transaction($conn);
 
-    $sql = "DELETE FROM USER WHERE email = ? AND password = ?";
-    $delete = mysqli_prepare($conn, $sql);
-    if (!$delete) {
-        return error($conn, "An error has occured");
+    //Check if the email matches the password
+    $passHash = getPasswordHash($password);
+    $result = execStatementResult("SELECT userId FROM USER WHERE email = ? AND password = ?","ss",$email,$passHash);
+    $userRow = $result->next();
+    if(!$userRow) {
+        return error($conn, "Email or password incorrect", 401);
     }
-    if (!mysqli_stmt_bind_param($delete, "ss", $email, getPasswordHash($password))) {
-        return error($conn, "An error has occured");
-    }
+    $userId = $userRow["userId"];
+    //If the user exists delete all its bookings
+    execStatement($conn, "DELETE FROM BOOKING WHERE userId = ?", "i", $userId);
+    
+    //Delete all hotels which ahve only userId as admin and their associated resources
+    $hotelsSql = "DELETE HOTEL, PERMISSION FROM HOTEL JOIN PERMISSION ON HOTEL.adminPermissionId = PERMISSION.permissionId 
+    WHERE 
+    (SELECT COUNT(IF(PERMISSION_GRANT.userId = 1, 1, NULL)), COUNT(IF(PERMISSION_GRANT.userId != 1, 1, NULL))
+        FROM PERMISSION_GRANT WHERE PERMISSION_GRANT.permissionId = HOTEL.adminPermissionId) = (1, 0)";
+    execStatement($conn, $hotelsSql, "ii", $userId, $userId);
 
-    if (!mysqli_stmt_execute($delete)) {
-        return error($conn, "An error has occured");
-    }
+    execStatement($conn, "DELETE FROM USER WHERE userId = ?", "i", $userId);
 
-    if (!mysqli_stmt_close($delete)) {
-        return error($conn, "An error has occured");
-    }
-
-    if (!mysqli_commit($conn)) {
-        return error($conn, "An error has occured");
-    }
-
-    if (!mysqli_autocommit($conn, true)) {
-        return error($conn, "An error has occured");
-    }
-
-    if (!mysqli_close($conn)) {
-        return error($conn, "An error has occured");
-    }
 
 }
 
@@ -290,7 +275,10 @@ function error(mysqli $conn, $message = "An error has occured", $code = 500)
 
 function authorize()
 {
+    if($_SERVER["REQUEST_METHOD"] == "OPTIONS")
+        error_log("You tried to authorize the CORS preflight");
     $headers = apache_request_headers();
+    error_log("Authorizing".$_SERVER["REQUEST_URI"]);
     $token = explode(" ", $headers["Authorization"])[1];
     /* foreach ($headers as $header => $value) {
         echo "$header: $value <br />\n";
@@ -308,42 +296,16 @@ function authorize()
         debug("AUTHENTICATION", $conn->error);
         return -1;
     }
-    $sql = "SELECT TOKEN.userId, USER.email FROM TOKEN JOIN USER ON USER.userId = TOKEN.userId WHERE value = '$token';";
-    $auth = mysqli_prepare($conn, $sql);
-    if (!$auth) {
-        debug("AUTHENTICATION", $conn->error." stmt open");
+    $sql = "SELECT TOKEN.userId as userId, USER.email as email FROM TOKEN JOIN USER ON USER.userId = TOKEN.userId WHERE value = ?";
+    $result = execStatementResult($conn, $sql, "s", $token);
+    $userRow = $result->next();
+    error_log("Token:".$token);
+    error_log("User in ".$_SERVER["REQUEST_METHOD"]." auth:".print_r($userRow, true));
+    if(!$userRow) {
         return -1;
     }
-    //if (!mysqli_stmt_bind_param($auth, "s", $token)) {
-    //    debug("AUTHENTICATION", $conn->error." stmt bind param");
-    //    return -1;
-    //}
-    if (!mysqli_stmt_execute($auth)) {
-        debug("AUTHENTICATION", $conn->error." stmt execute");
-        return -1;
-    }
-    if (!mysqli_stmt_bind_result($auth, $userId, $email)) {
-        debug("AUTHENTICATION", $conn->error." stmt bind result");
-        return -1;
-    }
-
-    mysqli_stmt_fetch($auth);
-    debug("AUTHENTICATION","Sql state:".mysqli_sqlstate($conn));
-    /*if (!mysqli_stmt_fetch($auth)) {
-        debug("AUTHENTICATION", $conn->error." stmt fetch");
-        return 0;
-    }*/
-    debug("AUTHENTICATION", "userId - after fetch:$userId");
-    if (!mysqli_stmt_close($auth)) {
-        debug("AUTHENTICATION", $conn->error." stmt close");
-        return -1;
-    }
-    if (!mysqli_close($conn)) {
-        debug("AUTHENTICATION", $conn->error." Conn close");
-        return -1;
-    }
-    debug("AUTHENTICATION", "Returning userId: $userId");
-    return array("userId" => $userId, "email" => $email);
+    
+    else return $userRow;
 }
 
 function generateToken()

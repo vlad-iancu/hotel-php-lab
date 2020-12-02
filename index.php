@@ -5,6 +5,7 @@
     require_once './Router.php';
     if($_SERVER["REQUEST_METHOD"] == "OPTIONS") {
         error_log("Front controller intercepted CORS preflight");
+        exit;
     }
     $router = new Router();
     $router->authorize = 'authorize';

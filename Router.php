@@ -37,6 +37,7 @@ class Router
                 $cred = ($this->authorize)();
                 $invokeBlock($body, $cred["userId"], $cred["email"]);
             } else {
+                error_log("Router matched the request: ".$_SERVER["REQUEST_URI"]. " as a GET authorized request");
                 $cred = ($this->authorize)();
                 $invokeBlock($cred["userId"], $cred["email"]);
             }

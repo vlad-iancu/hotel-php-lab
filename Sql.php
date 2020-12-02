@@ -38,18 +38,29 @@
 
     function execStatementResult($conn, $sql, $types, ...$params): Cursor {
         $stmt = mysqli_prepare($conn, $sql);
+        /* if($types == null) echo "types are null\n";
+        if($params == null) echo "params are null\n";
+        else echo "params are not null\n"; 
+        echo "We have :".count($params)."params"; */
+        
         if( ($types == null) != ($params == null)) {
-            return null;
+/*             echo "Both types and params are null or not, aborting $sql query";
+ */            return null;
         }
-        if($types && $params) {
-            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        if($types != null && $params != null) {
+/*             echo "Attempt to bind parameters\n";
+ */            if(!mysqli_stmt_bind_param($stmt, $types, ...$params)) {
+                echo "Binding failed\n";
+            }
         }
         $execute = mysqli_stmt_execute($stmt);
         if(!$execute) {
+            echo "Execution failed\n";
             return false;
         }
         $result = mysqli_stmt_get_result($stmt);
         if(!$result) {
+            echo "No cursor\n";
             return false;
         }
         return new Cursor($stmt, $result);
