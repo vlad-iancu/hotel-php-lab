@@ -3,7 +3,9 @@
     require_once './api//hotel/identity/HotelIdentityRepository.php';
     
     function addHotelIdentityRoutes(Router $router) {
-
+        $router->get("/hotels", true, function( $body, $userId, $email) {
+            
+        });
         $router->get("/hotel", true, function( $body, $userId, $email) {
             
         });

@@ -2,7 +2,7 @@
     require_once './MySqlConnect.php';
     require_once './Sql.php';
     require_once './api/Utils.php';
-    function getRoomsForHotel($hotelId, $userId) {
+    function getRoomsForHotel($hotelId, $userId, $page, $pageSize, $query) {
         $conn = getMysqliConnection();
         mysqli_autocommit($conn, false);
         mysqli_begin_transaction($conn);
@@ -15,8 +15,19 @@
         if(!$viewHotelPermission) {
             return array("status" => "error", "message" => "You do not have the permission to view this hotel");
         }
-
-        $result = execStatementResult($conn, "SELECT roomId as id, price as price FROM ROOM WHERE hotelId = ?","i",$hotelId);
+        $limit = $pageSize;
+        $offset = $pageSize * ($page - 1);
+        if($query) {
+           // echo "Query is set";
+            $result = execStatementResult($conn, "SELECT roomId as id, price as price, name as name, MATCH(name) AGAINST(?) as relevance 
+            FROM ROOM WHERE hotelId = ? ORDER BY relevance DESC LIMIT ? OFFSET ?;","siii", $query, $hotelId, $limit, $offset);
+        }
+        else {
+           // echo "Query is not set";
+            $result = execStatementResult($conn, "SELECT roomId as id, price as price, name as name
+            FROM ROOM WHERE hotelId = ? LIMIT ? OFFSET ?;","iii", $hotelId, $limit, $offset);
+        }
+        $roomCount = execStatementResult($conn, "SELECT COUNT(*) as roomCount FROM ROOM WHERE hotelId = ?", "i", $hotelId)->next()["roomCount"];
         $rooms = array();
         while($room = $result->next()) {
             array_push($rooms, $room);
@@ -25,7 +36,11 @@
         mysqli_commit($conn);
         mysqli_autocommit($conn, true);
         mysqli_close($conn);
-        return array("status" => "ok", "rooms" => $rooms);
+        return array(
+            "status" => "ok", 
+            "rooms" => $rooms,
+            "pages" => intdiv($roomCount, $limit),
+            "hasMore" => $page <= intdiv($roomCount, $limit)) ;
     }
 
     function getRoomById($userId, $roomId) {

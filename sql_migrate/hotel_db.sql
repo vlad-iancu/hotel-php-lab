@@ -88,6 +88,7 @@ DELIMITER ;
 
 CREATE TABLE ROOM (
     roomId INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    roomName VARCHAR(64),
     hotelId INT,
     writePermissionId INT,
     deletePermissionId INT,
@@ -105,7 +106,9 @@ CREATE TABLE ROOM (
     REFERENCES PERMISSION(permissionId),
     
     CONSTRAINT ROOM_DELETE_PERMISSION FOREIGN KEY (deletePermissionId)
-    REFERENCES PERMISSION(permissionId)
+    REFERENCES PERMISSION(permissionId),
+
+    FULLTEXT KEY(roomName)
 );
 
 CREATE TABLE BOOKING (

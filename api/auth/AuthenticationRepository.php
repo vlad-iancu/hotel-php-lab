@@ -278,7 +278,7 @@ function authorize()
     if($_SERVER["REQUEST_METHOD"] == "OPTIONS")
         error_log("You tried to authorize the CORS preflight");
     $headers = apache_request_headers();
-    error_log("Authorizing".$_SERVER["REQUEST_URI"]);
+   // error_log("Authorizing".$_SERVER["REQUEST_URI"]);
     $token = explode(" ", $headers["Authorization"])[1];
     /* foreach ($headers as $header => $value) {
         echo "$header: $value <br />\n";
@@ -299,8 +299,8 @@ function authorize()
     $sql = "SELECT TOKEN.userId as userId, USER.email as email FROM TOKEN JOIN USER ON USER.userId = TOKEN.userId WHERE value = ?";
     $result = execStatementResult($conn, $sql, "s", $token);
     $userRow = $result->next();
-    error_log("Token:".$token);
-    error_log("User in ".$_SERVER["REQUEST_METHOD"]." auth:".print_r($userRow, true));
+  //  error_log("Token:".$token);
+  //  error_log("User in ".$_SERVER["REQUEST_METHOD"]." auth:".print_r($userRow, true));
     if(!$userRow) {
         return -1;
     }

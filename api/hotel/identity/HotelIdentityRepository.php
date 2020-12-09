@@ -17,24 +17,25 @@
         if(!$success) {
             return error($conn, "Could not add the admin permission for the hotel", 500);
         }
+        
         $permissionId = mysqli_insert_id($conn);
         if(!$permissionId) {
             return error($conn, "Could not get the admin permission for the hotel", 500);
         }
-
+        error_log("Created the admin permission with id: $permissionId");
         $success = execStatement($conn, "INSERT INTO PERMISSION_GRANT(userId, permissionId) VALUES(?,?);","ii",$creatorId, $permissionId);
         if(!$success || !mysqli_affected_rows($conn)) {
             echo $permissionId.",";
             echo $creatorId;
             return error($conn, "Could not grant the admin permission to the user", 500);
         }
-
+        error_log("Granted the admin permission to user id: $creatorId");
         $success = execStatement($conn, "INSERT INTO HOTEL(hotelName, adminPermissionId, viewHotelPermissionId, createRoomPermissionId) VALUES(?,?,1,?)",
         "sii", $hotelName, $permissionId, $permissionId);
         if(!$success) {
             return error($conn, "Hotel already exists", 400);
         }
-
+        error_log("Created the hotel");
         $hotelId = mysqli_insert_id($conn);
         mysqli_commit($conn);
         mysqli_autocommit($conn, true);
@@ -179,8 +180,6 @@
         return array("status" => "ok", "message" => "Hotel visibility changed successfully");
     }
 
-    
-
     function getHotelsForUser($userId, $query, $page, $pageSize) {
         $conn = getMysqliConnection();
         mysqli_autocommit($conn, false);
@@ -223,7 +222,7 @@
             "status" => "ok",
             "hotels" => $hotels,
             "pages" => $numberOfPages,
-            "hasMore" => count($hotels) >= $limit
+            "hasMore" => $page <= $numberOfPages
         );
     }
 
